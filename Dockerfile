@@ -17,8 +17,9 @@ RUN bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
 	+app_update "${STEAMAPPID}" validate \
 	+quit
 
-COPY --chown=${USER}:${USER} scripts/entrypoint.sh /server/scripts/entrypoint.sh
-RUN chmod 550 /server/scripts/entrypoint.sh
+COPY ./scripts/entryoints.sh /server/scripts/entryoints.sh
+RUN chown -R ${USER}:${USER} /server/scripts/entryoints.sh
+RUN chmod 550 /server/scripts/entryoints.sh
 
 RUN mkdir -p "${HOMEDIR}/Zomboid"
 
@@ -27,4 +28,4 @@ WORKDIR ${HOMEDIR}
 EXPOSE 16261-16262/udp
 EXPOSE 27015/tcp
 
-ENTRYPOINT ["/server/scripts/entrypoint.sh"]
+ENTRYPOINT ["/server/scripts/entryoints.sh"]
