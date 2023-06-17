@@ -1,36 +1,30 @@
-FROM ubuntu:lunar
+FROM cm2network/steamcmd:root
 
-WORKDIR /home/steam
+ENV STEAMAPPID 380870
+ENV STEAMAPP pz
+ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
 
-ENV SERVERNAME="servertest"
+RUN apt-get update 
+RUN apt-get install -y --no-install-recommends --no-install-suggests dos2unix
+RUN apt-get clean 
+RUN rm -rf /var/lib/apt/lists/*
 
-# Proceed to Install steamcmd.
-RUN echo steam steam/question select "I AGREE" | debconf-set-selections && \
-	echo steam steam/license note '' | debconf-set-selections && \
-	dpkg --add-architecture i386 && \
-	apt-get -q -y update && \
-	DEBIAN_FRONTEND=noninteractive apt-get install -q -y --no-install-recommends \
-	ca-certificates gosu steamcmd && \
-	ln -sf /usr/games/steamcmd /usr/bin/steamcmd && \
-	DEBIAN_FRONTEND=noninteractive apt-get autoremove -q -y && \
-	rm -rf /var/lib/apt/lists/*
+RUN set -x
+RUN mkdir -p "${STEAMAPPDIR}"
+RUN chown -R "${USER}:${USER}" "${STEAMAPPDIR}"
+RUN bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
+	+login anonymous \
+	+app_update "${STEAMAPPID}" validate \
+	+quit
 
-# Create 'steam' group and user
-RUN groupadd steam
-RUN useradd --system --home-dir /home/steam --shell /bin/bash --gid steam steam && \
-	usermod -a -G tty steam && \
-	mkdir -m 755 /data && \
-	chown steam:steam /data /home/steam && \
-	chmod 755 /home/steam
+COPY --chown=${USER}:${USER} scripts/entrypoint.sh /server/scripts/entrypoint.sh
+RUN chmod 550 /server/scripts/entrypoint.sh
 
-ADD ./scripts/entrypoint.sh /entrypoint.sh
-ADD ./scripts/steamcmd-* /usr/local/bin/
+RUN mkdir -p "${HOMEDIR}/Zomboid"
 
-RUN chmod +x /entrypoint.sh
-RUN chmod +x /usr/local/bin/steamcmd-*
+WORKDIR ${HOMEDIR}
 
-ENV STEAMCMD_LOGIN=anonymous
+EXPOSE 16261-16262/udp
+EXPOSE 27015/tcp
 
-ENTRYPOINT ["/entrypoint.sh"]
-
-CMD ["steamcmd-wrapper", "true"]
+ENTRYPOINT ["/server/scripts/entrypoint.sh"]
