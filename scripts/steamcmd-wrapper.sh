@@ -17,6 +17,8 @@ if [ -z "$STEAMCMD_SKIP" ]; then
     +login $STEAMCMD_LOGIN \
     +app_update $STEAMCMD_APP_ID $beta $betapassword $validate \
     +quit
+  echo "Running server"
+  /data/start-server.sh -servername $SERVERNAME
 else
   echo "Skipping steamcmd"
 fi
